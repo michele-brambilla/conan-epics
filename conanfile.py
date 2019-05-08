@@ -17,7 +17,7 @@ EPICS_V4_BINS = ("eget", "pvget", "pvinfo", "pvlist", "pvput", "testServer")
 
 class EpicsbaseConan(ConanFile):
     name = "epics"
-    version = "3.16.1-4.6.0-dm7"
+    version = "3.16.1-4.6.0"
     license = "EPICS Open license and https://github.com/epics-base/bundleCPP/blob/4.6.0/LICENSE"
     url = "https://github.com/ess-dmsc/conan-epics-base"
     description = "EPICS Base and V4"
@@ -112,8 +112,9 @@ class EpicsbaseConan(ConanFile):
             "COMMANDLINE_LIBRARY = EPICS"
         )
 
-        if self.settings.compiler == "gcc" and self._using_devtoolset():
-            self._set_path_to_devtoolset_gnu()
+        if self.settings.compiler == "gcc":
+        # if self.settings.compiler == "gcc" and self._using_devtoolset():
+            self._set_compiler_path()
 
     def _using_devtoolset(self):
         gcc_path = tools.which("gcc")
@@ -135,6 +136,25 @@ class EpicsbaseConan(ConanFile):
             os.path.join(EPICS_BASE_DIR, "configure", "CONFIG.gnuCommon"),
             "GNU_LIB = $(GNU_DIR)/lib",
             "GNU_LIB = {}/lib".format(path_to_gnu)
+        )
+
+    def _set_compiler_path(self):
+        gcc_path = tools.which("gcc")
+        tools.replace_in_file(
+            os.path.join(EPICS_BASE_DIR, "configure", "CONFIG.gnuCommon"),
+            "CC = $(GNU_BIN)/$(CMPLR_PREFIX)gcc$(CMPLR_SUFFIX)",
+            "CC = {}".format(gcc_path)
+        )
+        gcc_path = tools.which("g++")
+        tools.replace_in_file(
+            os.path.join(EPICS_BASE_DIR, "configure", "CONFIG.gnuCommon"),
+            "CCC = $(GNU_BIN)/$(CMPLR_PREFIX)g++$(CMPLR_SUFFIX)",
+            "CCC = {}".format(gcc_path)
+        )
+        tools.replace_in_file(
+            os.path.join(EPICS_BASE_DIR, "configure", "CONFIG.gnuCommon"),
+            "OPT_CXXFLAGS_YES = -O3",
+            "OPT_CXXFLAGS_YES = -O3 -std=c++11"
         )
 
     def _add_darwin_config(self):
